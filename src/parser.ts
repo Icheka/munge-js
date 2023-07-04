@@ -6,7 +6,7 @@ type AstNode = Statement; // will extend to include 'statements' like macros
 
 type Ast = Array<AstNode>;
 
-class RangeStatement {
+class RangeStatement implements Statement {
   start?: string;
   end?: string;
 
@@ -17,7 +17,7 @@ class RangeStatement {
   }
 }
 
-class SelectionStatement {
+class SelectionStatement implements Statement {
   selector: string;
   range: RangeStatement;
 
@@ -27,7 +27,7 @@ class SelectionStatement {
   }
 }
 
-class AssignmentStatement {
+export class AssignmentStatement implements Statement {
   identifier: string;
   selection: SelectionStatement;
 
@@ -46,7 +46,7 @@ class UnexpectedTokenError extends Error {
 
 export default class Parser {
   private lexer: Lexer;
-  private currentToken: Token;
+  public currentToken: Token;
 
   constructor(lexer: Lexer) {
     this.lexer = lexer;
@@ -55,17 +55,20 @@ export default class Parser {
 
   public parse(): Ast {
     const statements: Array<Statement> = [];
-    while (!!this.lexer.currentCh) {
+    while (!this.lexer.isEof) {
       statements.push(this.parseStatement());
       this.advanceToNextToken();
-      //   console.log(this.currentToken);
     }
 
     return statements;
   }
 
-  private parseStatement(): Statement {
-    // console.log(this.currentToken);
+  public parseStatement(): Statement {
+    if (this.currentToken.value === ReservedTokens.NEWLINE) {
+      this.advanceToNextToken();
+      return this.parseStatement();
+    }
+
     if (this.currentToken.type !== TokenTypes.IDENTIFIER)
       throw new UnexpectedTokenError(
         TokenTypes.IDENTIFIER,
@@ -92,13 +95,15 @@ export default class Parser {
       return statement;
     }
 
+    if (this.currentToken.type === TokenTypes.EOF.toString()) return statement;
+
     throw new UnexpectedTokenError(
       ReservedTokens.LPAREN,
       this.currentToken.value
     );
   }
 
-  private parseRangeStatement(): RangeStatement {
+  public parseRangeStatement(): RangeStatement {
     this.advanceAndAssertThatNextTokenIs(TokenTypes.INTEGER);
     const start = this.currentToken.value;
 
@@ -127,11 +132,13 @@ export default class Parser {
 
     throw new UnexpectedTokenError(
       `${ReservedTokens.DELIMITER} or ${TokenTypes.INTEGER}`,
-      this.currentToken.value
+      this.currentToken.type === TokenTypes.EOF.toString()
+        ? this.currentToken.type
+        : this.currentToken.value
     );
   }
 
-  private advanceAndAssertThatNextTokenIs(tokenType: string) {
+  public advanceAndAssertThatNextTokenIs(tokenType: string) {
     this.advanceToNextToken();
     if (this.currentToken.type !== tokenType)
       throw new UnexpectedTokenError(tokenType, this.currentToken.type);

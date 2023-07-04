@@ -64,7 +64,7 @@ export default class Lexer {
   public isEof: boolean;
 
   constructor(input: string) {
-    this.input = input.trim().concat("\n");
+    this.input = input.trim();
     this.isEof = false;
 
     this.advanceToNextToken();
