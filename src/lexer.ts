@@ -22,28 +22,28 @@ const reservedTokens: Record<string, ReservedTokens> = Object.entries(
   {}
 );
 
-function isDigit(value: string) {
+export function isDigit(value: string) {
   return /\d/.test(value);
 }
 
-function isIdentifier(value: string) {
+export function isIdentifier(value: string) {
   return (
     isDigit(value) ||
     (!isSpace(value) && !isNewLine(value) && !isReservedToken(value))
   );
 }
 
-function isReservedToken(value: string) {
+export function isReservedToken(value: string) {
   const tokens = Object.values(ReservedTokens);
   return tokens.includes(value as any);
 }
 
-function isSpace(value: string) {
-  return /\s/.test(value) && !/\n/.test(value);
+export function isSpace(value: string) {
+  return /\s/.test(value) && !isNewLine(value);
 }
 
-function isNewLine(value: string) {
-  return /\n/.test(value);
+export function isNewLine(value: string) {
+  return value === "\n";
 }
 
 class Token {
@@ -56,7 +56,7 @@ class Token {
   }
 }
 
-export class Lexer {
+export default class Lexer {
   private input: string;
   public currentCh!: string;
   private currentIndex!: number;
