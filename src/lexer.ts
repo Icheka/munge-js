@@ -1,9 +1,8 @@
-export enum ReservedTokens {
+enum ReservedTokens {
   LPAREN = "(",
   RPAREN = ")",
   DELIMITER = ",",
   EQUALS = "=",
-  NEWLINE = "\n",
 }
 
 export enum TokenTypes {
@@ -47,7 +46,7 @@ export function isNewLine(value: string) {
   return value === "\n";
 }
 
-export class Token {
+class Token {
   type: string;
   value: string;
 
@@ -64,7 +63,7 @@ export default class Lexer {
   public isEof: boolean;
 
   constructor(input: string) {
-    this.input = input.trim().concat("\n");
+    this.input = input.trim();
     this.isEof = false;
 
     this.advanceToNextToken();
