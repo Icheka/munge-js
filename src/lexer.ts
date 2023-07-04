@@ -8,7 +8,7 @@ export enum ReservedTokens {
 
 export enum TokenTypes {
   IDENTIFIER = "IDENTIFIER",
-  RESERVED = "RESERVED",
+  RESERVED = "RESERVED  ",
   INTEGER = "INTEGER",
   EOF = "EOF",
 }
@@ -118,7 +118,12 @@ export default class Lexer {
 
   private readIdentifier() {
     const id: Array<string> = [];
-    while (this.currentCh !== undefined && isIdentifier(this.currentCh)) {
+    while (
+      this.currentCh !== undefined &&
+      (isIdentifier(this.currentCh) ||
+        (this.currentCh === ReservedTokens.EQUALS &&
+          isIdentifier(this.input[this.currentIndex - 1])))
+    ) {
       id.push(this.currentCh);
       this.advanceToNextToken();
     }
