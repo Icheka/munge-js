@@ -2,8 +2,7 @@ import Lexer from "./lexer";
 import Parser from "./parser";
 
 const input = `
-intro = div#intro (0)
-twitterLink = a.social-links (1)
+twitterLink = a.social-links[data-name="twitter"]
 `;
 
 const lexer = new Lexer(input);
