@@ -88,11 +88,11 @@ describe("isNewLine", () => {
     const tests = [
       { value: "1", expected: false },
       { value: "\n", expected: true },
-      { value: "\t", expected: true },
+      { value: "\t", expected: false },
       { value: "s", expected: false },
       { value: "a", expected: false },
       { value: "", expected: false },
-      { value: " ", expected: true },
+      { value: " ", expected: false },
     ];
 
     tests.forEach(({ expected, value }) => {
