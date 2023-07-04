@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "incremental": false,
+    "baseUrl": "./"
+  },
+  "extends": "../../tsconfig.server.json",
+  "include": ["src"]
+}
