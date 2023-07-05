@@ -6,4 +6,7 @@ export default defineConfig(() => ({
   sourcemap: true,
   clean: true,
   dts: true,
+  bundle: false,
+  treeshake: true,
+  target: ['node', 'esnext']
 }));

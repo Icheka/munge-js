@@ -9,6 +9,15 @@
     "url": "https://github.com/icheka"
   },
   "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "test": "jest",
     "build": "tsc --noEmit && tsup"
