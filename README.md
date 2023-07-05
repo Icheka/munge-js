@@ -41,7 +41,7 @@ Munge is an expressive, declarative Domain-Specific Language where the "domain" 
 ### Selection Expressions
 Selections are the core of Munge syntax. A selections can comprise three parts:
 1. A "base" that is essentially a CSS selector (e.g `section#team ul.members li`). The base is the only required part of a Munge selection.
-2. An optional attribute array that specifies which attributes to extract from the elements captured by the *base*.
+2. An optional attributes-array that specifies which attributes to extract from the elements captured by the *base*.
 
     We can extract the URLs of the avatars of team members captured by the base in (1) like so:
     ```
@@ -51,6 +51,64 @@ Selections are the core of Munge syntax. A selections can comprise three parts:
     ```
     section#team ul.members li > img {src, alt}
     ```
+
+    <quote>
+    In addition to the usual CSS attributes (class, id, src, alt, etc), Munge also supports the following attributes:
+    
+    - **text:** this is the value you would get if you executed `document.querySelector(selector).innerText`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+        </div>
+
+        // munge
+        intro = div.introduction {text}
+
+        // result
+        'Welcome to MungeJS'
+        ```
+
+    - **html:** this is the value you would get if you executed `document.querySelector(selector).innerHTML`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+            <hr />
+        </div>
+
+        // munge
+        intro = div.introduction {text}
+
+        // result
+        'Welcome to MungeJS <hr>'
+        ```
+
+    - **outer:** this is the value you would get if you executed `document.querySelector(selector).outerHTML`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+            <hr />
+        </div>
+
+        // munge
+        intro = div.introduction {outer}
+
+        // result
+        '<div class="introduction">Welcome to MungeJS <hr></div>'
+        ```
+    </quote>
+    
 3. An optional range expression that specifies the "range" of elements to capture. Munge indexes are zero-based (i.e '0' means 'the first element', '1' means 'the second element', etc). When a range expression is not provided, Munge only captures the first matching element.
     
     Munge supports three kinds of range expressions:
