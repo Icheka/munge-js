@@ -169,6 +169,31 @@ console.log(results.title)
 // Web scraping
 ```
 
+## With TypeScript
+The `Munger` class accepts a generic that it can use to "type" the `Munger.munge()` result for intellisense/autocomplete, etc.
+
+```typescript
+import Munger from "munge-js"
+
+type WikipediaPage = {
+    title: string;
+    description: string;
+}
+
+const dsl = `
+title = #firstHeading {text}
+description = .mw-parser-output p:first-of-type {text}
+`
+const munger = new Munger<WikipediaPage>(dsl)
+
+const html = await fetch('https://en.wikipedia.org/wiki/Web_scraping').then((res) => res.text())
+
+const results = munger.munge(html)
+
+console.log(results.title)
+// Web scraping
+```
+
 ## Special Thanks
 MungeJS would probably not exist without inspiration from:
 - [@mrnugget](https://github.com/mrnugget), whose work on both *Writing an Interpreter In Go* and *Writing a Compiler In Go* set me up for a study in programming linguistics and interpreter/compiler design.
