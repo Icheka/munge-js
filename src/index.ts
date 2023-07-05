@@ -2,7 +2,7 @@ import Executor, { DefaultResultShape } from "./executor";
 import Lexer from "./lexer";
 import Parser, { Ast } from "./parser";
 
-export class Munger<TResult extends DefaultResultShape> {
+export default class Munger<TResult extends DefaultResultShape> {
   private ast: Ast;
 
   constructor(dslCode: string) {
