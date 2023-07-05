@@ -57,6 +57,8 @@ describe("isReservedToken", () => {
       { value: "=", expected: true },
       { value: "(", expected: true },
       { value: ")", expected: true },
+      { value: "{", expected: true },
+      { value: "}", expected: true },
     ];
 
     tests.forEach(({ expected, value }) => {

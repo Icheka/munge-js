@@ -88,14 +88,51 @@ describe("parseStatement", () => {
       start: "0",
       end: "1",
     },
+    {
+      input: "intro = div#intro {text}",
+      identifier: "intro",
+      selector: "div#intro",
+      start: undefined,
+      end: undefined,
+      attributes: ["text"],
+    },
+    {
+      input: "intro = div#intro {text} (0)",
+      identifier: "intro",
+      selector: "div#intro",
+      start: "0",
+      end: "0",
+      attributes: ["text"],
+    },
+    {
+      input: "intro = div#intro {text} (0, 1)",
+      identifier: "intro",
+      selector: "div#intro",
+      start: "0",
+      end: "1",
+      attributes: ["text"],
+    },
+    {
+      input: "intro = div#intro {text} (0,)",
+      identifier: "intro",
+      selector: "div#intro",
+      start: "0",
+      end: undefined,
+      attributes: ["text"],
+    },
+    {
+      input: "intro = div#intro {text, class} (0,)",
+      identifier: "intro",
+      selector: "div#intro",
+      start: "0",
+      end: undefined,
+      attributes: ["text", "class"],
+    },
   ];
 
-  tests.forEach(({ end, identifier, input, selector, start }) => {
+  tests.forEach(({ input, ...args }) => {
     testParseStatement(input, {
-      end,
-      identifier,
-      selector,
-      start,
+      ...args,
     });
   });
 });
@@ -130,11 +167,13 @@ function testParseStatement(
     identifier,
     selector,
     start,
+    attributes,
   }: {
     identifier: string;
     selector: string;
     start?: string;
     end?: string;
+    attributes?: Array<string>;
   }
 ) {
   const parser = new Parser(new Lexer(input));
@@ -145,4 +184,13 @@ function testParseStatement(
   expect((statement as AssignmentStatement).selection.selector).toBe(selector);
   expect((statement as AssignmentStatement).selection.range.start).toBe(start);
   expect((statement as AssignmentStatement).selection.range.end).toBe(end);
+
+  if (attributes) {
+    expect(
+      Array.isArray((statement as AssignmentStatement).selection.attributes)
+    ).toBeTruthy();
+    expect(
+      (statement as AssignmentStatement).selection.attributes?.sort()
+    ).toEqual(attributes.sort());
+  }
 }

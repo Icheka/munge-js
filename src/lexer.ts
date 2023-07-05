@@ -4,6 +4,8 @@ export enum ReservedTokens {
   DELIMITER = ",",
   EQUALS = "=",
   NEWLINE = "\n",
+  LBRACE = "{",
+  RBRACE = "}",
 }
 
 export enum TokenTypes {
