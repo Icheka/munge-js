@@ -4,7 +4,7 @@ interface Statement {}
 
 type AstNode = Statement; // will extend to include 'statements' like macros
 
-type Ast = Array<AstNode>;
+export type Ast = Array<AstNode>;
 
 class RangeStatement implements Statement {
   start?: string;

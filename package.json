@@ -20,5 +20,8 @@
     "ts-node": "^10.9.1",
     "tsup": "^7.1.0",
     "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "node-html-parser": "^6.1.5"
   }
 }

@@ -116,13 +116,20 @@ export default class Lexer {
     return integers.join("");
   }
 
+  private previousCharacterIsIdentifier() {
+    return isIdentifier(this.input[this.currentIndex - 1]);
+  }
+
   private readIdentifier() {
     const id: Array<string> = [];
     while (
       this.currentCh !== undefined &&
       (isIdentifier(this.currentCh) ||
         (this.currentCh === ReservedTokens.EQUALS &&
-          isIdentifier(this.input[this.currentIndex - 1])))
+          this.previousCharacterIsIdentifier()) ||
+        (isSpace(this.currentCh) &&
+          this.previousCharacterIsIdentifier() &&
+          this.input[this.currentIndex + 1] !== ReservedTokens.EQUALS))
     ) {
       id.push(this.currentCh);
       this.advanceToNextToken();

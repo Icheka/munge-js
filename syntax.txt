@@ -1,6 +1,0 @@
-header = h1 @0
-firstParagraph = div.article-p (0)
-restParagraphs = div.article-p (1,)
-firstInput = input (0,4).value
-
-allInputs = input (0,).type
