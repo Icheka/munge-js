@@ -129,7 +129,7 @@ export default class Lexer {
           this.previousCharacterIsIdentifier()) ||
         (isSpace(this.currentCh) &&
           this.previousCharacterIsIdentifier() &&
-          this.input[this.currentIndex + 1] !== ReservedTokens.EQUALS))
+          !isReservedToken(this.input[this.currentIndex + 1])))
     ) {
       id.push(this.currentCh);
       this.advanceToNextToken();
