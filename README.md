@@ -8,7 +8,7 @@ products = table.products > tbody > tr (0,)
 
 **Author:** [@icheka](https://github.com/icheka)
 
-MungeJS is a powerful DSL for representing web scraping logic as code that can be stored anywhere -- as text files in a file system, as strings in code, even as textual data in a database. MungeJS separates the representation of web-scraping logic from its execution, allowing you to do never-before-done wizardry like storing that logic and only culling it when you actually need it; or representing your scraper in a code-agnostic way that allows you to re-use your scraper across different programming languages (see the section on Using MungeJS outside JavaScript).
+MungeJS is a powerful DSL for representing web scraping logic as code that can be stored anywhere -- as text files in a file system, as strings in code, even as textual data in a database. MungeJS separates the representation of web-scraping logic from its execution, allowing you to do never-before-done wizardry like storing that logic and only culling it when you actually need it; or representing your scraper in a code-agnostic way that allows you to re-use your scraper across different programming languages (see the section on [Using the JavaScript Interpreter](https://github.com/Icheka/munge-js#using-the-javascript-interpreter)).
 
 
 No installation is required to start using Munge.
@@ -38,10 +38,10 @@ async function webHookThatUpdatesProductsTable(data) {
 ## Syntax
 Munge is an expressive, declarative Domain-Specific Language where the "domain" is simply "HTML/XHTML parsing". The actual implementation of the Munge interpreter in any language is of no consequence to the user (although you are free to take a look at the source code for this JavaScript interpreter, as well as write your own implementations in other languages), so this section will focus on the syntax of the DSL itself.
 
-### Selection Statements
-Selectors are the core of Munge syntax. A selector can comprise three parts:
+### Selection Expressions
+Selections are the core of Munge syntax. A selections can comprise three parts:
 1. A "base" that is essentially a CSS selector (e.g `section#team ul.members li`). The base is the only required part of a Munge selection.
-2. An optional attribute array that specifies which attributes to extract from the elements captured by the *base*.
+2. An optional attributes-array that specifies which attributes to extract from the elements captured by the *base*.
 
     We can extract the URLs of the avatars of team members captured by the base in (1) like so:
     ```
@@ -51,6 +51,64 @@ Selectors are the core of Munge syntax. A selector can comprise three parts:
     ```
     section#team ul.members li > img {src, alt}
     ```
+
+    <quote>
+    In addition to the usual CSS attributes (class, id, src, alt, etc), Munge also supports the following attributes:
+    
+    - **text:** this is the value you would get if you executed `document.querySelector(selector).innerText`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+        </div>
+
+        // munge
+        intro = div.introduction {text}
+
+        // result
+        'Welcome to MungeJS'
+        ```
+
+    - **html:** this is the value you would get if you executed `document.querySelector(selector).innerHTML`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+            <hr />
+        </div>
+
+        // munge
+        intro = div.introduction {text}
+
+        // result
+        'Welcome to MungeJS <hr>'
+        ```
+
+    - **outer:** this is the value you would get if you executed `document.querySelector(selector).outerHTML`
+    
+        For example:
+
+        ```javascript
+        // html
+        <div class="introduction">
+            Welcome to MungeJS
+            <hr />
+        </div>
+
+        // munge
+        intro = div.introduction {outer}
+
+        // result
+        '<div class="introduction">Welcome to MungeJS <hr></div>'
+        ```
+    </quote>
+    
 3. An optional range expression that specifies the "range" of elements to capture. Munge indexes are zero-based (i.e '0' means 'the first element', '1' means 'the second element', etc). When a range expression is not provided, Munge only captures the first matching element.
     
     Munge supports three kinds of range expressions:
@@ -139,14 +197,14 @@ To execute Munge code, you'll need the Munge Interpreter. The Munge interpreter 
 
 At the moment, only the JavaScript interpeter has been implemented (so you can use Munge in your JavaScript/TypeScript projects, on both the client-side and the server-side). Support for Python and Go will come in the coming months. Feel free to contribute to, extend, and even create your own implementation of, these interpreters.
 
-## Installation
+### Installation
 **NPM:** `npm install munge-js`
 
 **Yarn:** `yarn add munge-js`
 
 **PNPM:** `pnpm --filter <package-filter> install munge-js`
 
-## Usage
+### Usage
 To execute your Munge code, create a Munge instance with your Munge DSL:
 ```javascript
 import Munger from "munge-js"
@@ -169,8 +227,8 @@ console.log(results.title)
 // Web scraping
 ```
 
-## With TypeScript
-The `Munger` class accepts a generic that it can use to "type" the `Munger.munge()` result for intellisense/autocomplete, etc.
+### With TypeScript
+The `Munger` class accepts a generic that can be used to "type" the `Munger.munge()` result for intellisense/autocomplete, etc.
 
 ```typescript
 import Munger from "munge-js"

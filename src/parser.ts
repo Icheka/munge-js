@@ -6,6 +6,8 @@ type AstNode = Statement; // will extend to include 'statements' like macros
 
 export type Ast = Array<AstNode>;
 
+export type AttributesArray = Array<string>;
+
 class RangeStatement implements Statement {
   start?: string;
   end?: string;
@@ -17,21 +19,27 @@ class RangeStatement implements Statement {
   }
 }
 
-class SelectionStatement implements Statement {
+class SelectionExpression implements Statement {
   selector: string;
   range: RangeStatement;
+  attributes?: AttributesArray;
 
-  constructor(selector: string, range: RangeStatement) {
+  constructor(
+    selector: string,
+    range: RangeStatement,
+    attributes?: AttributesArray
+  ) {
     this.selector = selector;
     this.range = range;
+    this.attributes = attributes;
   }
 }
 
 export class AssignmentStatement implements Statement {
   identifier: string;
-  selection: SelectionStatement;
+  selection: SelectionExpression;
 
-  constructor(identifier: string, selection: SelectionStatement) {
+  constructor(identifier: string, selection: SelectionExpression) {
     this.identifier = identifier;
     this.selection = selection;
   }
@@ -78,29 +86,68 @@ export default class Parser {
     const identifier = this.currentToken.value;
 
     this.advanceAndAssertThatNextTokenIs("EQUALS");
-    this.advanceAndAssertThatNextTokenIs(TokenTypes.IDENTIFIER);
+    this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
+    const selection = this.parseSelectionExpression();
+
+    return new AssignmentStatement(identifier, selection);
+  }
+
+  private parseSelectionExpression(): SelectionExpression {
+    if (this.currentToken.type !== TokenTypes.IDENTIFIER)
+      throw new UnexpectedTokenError(
+        TokenTypes.IDENTIFIER,
+        this.currentToken.type
+      );
 
     const selector = this.currentToken.value;
+    const expression = new SelectionExpression(selector, new RangeStatement());
 
     this.advanceToNextToken();
 
-    const statement = new AssignmentStatement(
-      identifier,
-      new SelectionStatement(selector, new RangeStatement())
-    );
-
-    if (this.currentToken.value === ReservedTokens.NEWLINE) return statement;
+    if (this.currentToken.value === ReservedTokens.NEWLINE) return expression;
     if (this.currentToken.value === ReservedTokens.LPAREN) {
-      statement.selection.range = this.parseRangeStatement();
-      return statement;
+      expression.range = this.parseRangeStatement();
+      return expression;
+    }
+    if (this.currentToken.value === ReservedTokens.LBRACE) {
+      expression.attributes = this.parseAttributesArray();
+      this.advanceToNextToken();
+
+      if (this.currentToken.value === ReservedTokens.NEWLINE.toString())
+        return expression;
+      if (this.currentToken.value === ReservedTokens.LPAREN.toString()) {
+        expression.range = this.parseRangeStatement();
+        return expression;
+      }
     }
 
-    if (this.currentToken.type === TokenTypes.EOF.toString()) return statement;
+    if (this.currentToken.type === TokenTypes.EOF.toString()) return expression;
 
     throw new UnexpectedTokenError(
       ReservedTokens.LPAREN,
       this.currentToken.value
     );
+  }
+
+  public parseAttributesArray(): AttributesArray {
+    const attributes: AttributesArray = [];
+
+    while (this.currentToken.value !== ReservedTokens.RBRACE) {
+      this.advanceAndAssertThatNextTokenIs(TokenTypes.IDENTIFIER);
+
+      attributes.push(this.currentToken.value);
+
+      this.advanceToNextToken();
+      if (this.currentToken.value === ReservedTokens.DELIMITER) continue;
+      if (this.currentToken.value === ReservedTokens.RBRACE) break;
+
+      throw new UnexpectedTokenError(
+        `${ReservedTokens.DELIMITER} or ${ReservedTokens.RBRACE}`,
+        this.currentToken.value
+      );
+    }
+
+    return attributes;
   }
 
   public parseRangeStatement(): RangeStatement {
