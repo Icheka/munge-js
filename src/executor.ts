@@ -4,7 +4,7 @@ import { parse as parseHTML, HTMLElement } from "node-html-parser";
 export type Element = HTMLElement;
 
 export interface DefaultResultShape {
-  [x: string]: Element | Element[];
+  [x: string]: Element | Element[] | string | Array<string>;
 }
 
 export default class Executor<TResult extends DefaultResultShape> {
