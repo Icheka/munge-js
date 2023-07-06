@@ -1,6 +1,6 @@
 {
   "name": "munge-js",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "MungeJS is a flexible DSL for representing scraping logic as code that can be stored anywhere -- as text files in a file system, as JSON files in a code repository, even as textual data in a database. MungeJS separates the representation of web-scraping logic from its execution.",
   "main": "dist/index.js",
   "author": {
@@ -20,7 +20,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "tsc --noEmit && tsup"
+    "build": "tsc --noEmit && tsup",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",

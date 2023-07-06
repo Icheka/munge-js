@@ -8,5 +8,5 @@ export default defineConfig(() => ({
   dts: true,
   bundle: false,
   treeshake: true,
-  target: ['node', 'esnext']
+  target: ['node18', 'esnext']
 }));
