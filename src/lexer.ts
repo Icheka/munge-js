@@ -125,13 +125,17 @@ export default class Lexer {
   private readIdentifier() {
     const id: Array<string> = [];
     while (
-      this.currentCh !== undefined &&
-      (isIdentifier(this.currentCh) ||
-        (this.currentCh === ReservedTokens.EQUALS &&
-          this.previousCharacterIsIdentifier()) ||
-        (isSpace(this.currentCh) &&
-          this.previousCharacterIsIdentifier() &&
-          !isReservedToken(this.input[this.currentIndex + 1])))
+      (this.currentCh !== undefined &&
+        (isIdentifier(this.currentCh) ||
+          (this.currentCh === ReservedTokens.EQUALS &&
+            this.previousCharacterIsIdentifier()) ||
+          (isSpace(this.currentCh) &&
+            this.previousCharacterIsIdentifier() &&
+            !isReservedToken(this.input[this.currentIndex + 1])))) ||
+      ((this.currentCh === ReservedTokens.LPAREN ||
+        this.currentCh === TokenTypes.INTEGER ||
+        this.currentCh === ReservedTokens.RPAREN) &&
+        this.previousCharacterIsIdentifier())
     ) {
       id.push(this.currentCh);
       this.advanceToNextToken();
