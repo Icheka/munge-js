@@ -224,7 +224,6 @@ function testFunctionStatement(
     returnExpression: resReturn,
   } = parser.parseFunction();
 
-  console.log([resStatements]);
   expect(resId).toBe(identifier);
   expect(resStatements.length).toBe(statements.length);
   // TODO: test individual statements match
