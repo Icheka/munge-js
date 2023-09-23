@@ -4,6 +4,7 @@ import {
   AttributesArray,
   AstNode,
   FunctionStatement,
+  FunctionInvocationStatement,
 } from "./parser";
 import { parse as parseHTML, HTMLElement } from "node-html-parser";
 
@@ -34,6 +35,12 @@ export default class Executor<TResult extends DefaultResultShape> {
 
   private isFunctionNode(node: any): node is FunctionStatement {
     return node.identifier && node.statements && node.returnExpression;
+  }
+
+  private isFunctionInvocationNode(
+    node: any
+  ): node is FunctionInvocationStatement {
+    return node.identifier && node.functionName;
   }
 
   private execute(ast?: Array<AstNode>) {
@@ -82,6 +89,11 @@ export default class Executor<TResult extends DefaultResultShape> {
       }
 
       if (this.isFunctionNode(node)) {
+        if (this.functions[node.identifier])
+          throw new Error(
+            `Function ${node.identifier} has already been defined`
+          );
+
         const executorContext = new Executor(node.statements, this.html);
         executorContext.execute(node.statements);
 
@@ -95,11 +107,17 @@ export default class Executor<TResult extends DefaultResultShape> {
         );
 
         // hoist function scope
-        (this.results as any)[node.identifier] = results;
+        this.functions[node.identifier] = results;
 
         continue;
       }
 
+      if (this.isFunctionInvocationNode(node)) {
+        const { functionName, identifier } = node;
+        (this.results as any)[identifier] = Object.values(this.functions[functionName])[0];
+        continue;
+      }
+      
       throw new Error(`Invalid AST. ${JSON.stringify(node)}`);
     }
   }

@@ -26,7 +26,7 @@ def function
   x = #viewport > canvas
   return {x}
 
-x = do function
+y = do function
 `).munge("<div id=viewport><canvas></canvas></div>");
 
 console.log({ result });
