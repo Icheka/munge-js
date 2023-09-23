@@ -113,9 +113,7 @@ export default class Parser {
 
     if (this.currentToken.value === ReservedTokens.DELIMITER) {
       const identifiers = this.parseMultiAssignmentIdentifiers(identifier);
-
-      // advance to EQUALS
-      this.advanceToNextToken();
+      console.log({ identifiers });
 
       // advance to DO
       this.advanceToNextToken();
@@ -139,6 +137,11 @@ export default class Parser {
       }
     }
 
+    if (this.currentToken.value === ReservedTokens.NEWLINE) {
+      this.advanceToNextToken();
+      return this.parseStatement();
+    }
+
     throw new UnexpectedTokenError(
       ReservedTokens.EQUALS,
       this.currentToken.value
@@ -157,8 +160,15 @@ export default class Parser {
     ) {
       this.advanceAndAssertThatNextTokenIs(TokenTypes.IDENTIFIER);
       identifiers.push(this.currentToken.value);
+      console.log("id", identifiers);
 
-      if (this.lexer.peek() !== ReservedTokens.DELIMITER) break;
+      let peek = this.lexer.peek();
+      console.log({ peek });
+
+      if (peek.value !== ReservedTokens.DELIMITER) {
+        console.log('NO')
+        continue;
+      }
       this.advanceToNextToken();
     }
 
