@@ -1,6 +1,6 @@
 import Lexer, { ReservedTokens, Token, TokenTypes } from "./lexer";
 
-interface Statement {}
+export interface Statement {}
 
 export type AstNode = Statement; // will extend to include 'statements' like macros
 
@@ -16,7 +16,7 @@ export class FunctionStatement implements Statement {
   ) {}
 }
 
-class ReturnStatement implements Statement {
+export class ReturnStatement implements Statement {
   /**
    *
    * @param expressionsList array of identifiers

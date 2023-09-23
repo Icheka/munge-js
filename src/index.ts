@@ -23,9 +23,9 @@ const result = new Munger(`
 def function
   x = #viewport
   y = #viewport > canvas
-  return {x}
+  return {x, y}
 
-div = do function
+div, canvas = do function
 `).munge("<div id=viewport><canvas></canvas></div>");
 
 console.log({ result });

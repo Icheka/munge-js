@@ -5,6 +5,8 @@ import {
   AstNode,
   FunctionStatement,
   FunctionInvocationStatement,
+  Statement,
+  ReturnStatement,
 } from "./parser";
 import { parse as parseHTML, HTMLElement } from "node-html-parser";
 
@@ -18,7 +20,14 @@ export default class Executor<TResult extends DefaultResultShape> {
   public ast: Ast;
   private $: Element;
   public results: TResult;
-  public functions: Record<string, any>;
+  public functions: Record<
+    string,
+    {
+      results: Record<string, any>;
+      statements: Array<Statement>;
+      returnExpression: ReturnStatement;
+    }
+  >;
 
   constructor(ast: Ast, private html: string) {
     this.ast = ast;
@@ -93,36 +102,35 @@ export default class Executor<TResult extends DefaultResultShape> {
           throw new Error(
             `Function ${node.identifier} has already been defined`
           );
-
-        const executorContext = new Executor(node.statements, this.html);
-        executorContext.execute(node.statements);
-
-        const variables = executorContext.results;
-        const results = node.returnExpression.expressionsList.reduce(
-          (prev, curr) => ({
-            ...prev,
-            [curr]: variables[curr],
-          }),
-          {}
-        );
-
-        // hoist function scope
-        this.functions[node.identifier] = results;
-
+        this.functions[node.identifier] = {
+          results: {},
+          statements: node.statements,
+          returnExpression: node.returnExpression,
+        };
         continue;
       }
 
       if (this.isFunctionInvocationNode(node)) {
         const { functionName, identifiers } = node;
+        const func = this.functions[functionName];
 
-        if (!this.functions[functionName])
-          throw new Error(`Function ${functionName} is undefined`);
+        if (!func) throw new Error(`Function ${functionName} is undefined`);
+
+        if (!Object.keys(func.results).length) {
+          func.results = this.executeFunction(
+            func.statements,
+            func.returnExpression
+          );
+        }
 
         const functionReturnIdentifiers = Object.values(
-          this.functions[functionName]
+          this.functions[functionName].results
         );
 
-        if (functionReturnIdentifiers.length < identifiers.length) throw new Error(`Function ${functionName} does not return enough variables to unpack. Function returns ${functionReturnIdentifiers.length}, you expected ${identifiers.length}`);
+        if (functionReturnIdentifiers.length < identifiers.length)
+          throw new Error(
+            `Function ${functionName} does not return enough variables to unpack. Function returns ${functionReturnIdentifiers.length}, you expected ${identifiers.length}`
+          );
 
         identifiers.forEach((identifier, i) => {
           (this.results as any)[identifier] = functionReturnIdentifiers[i];
@@ -133,6 +141,23 @@ export default class Executor<TResult extends DefaultResultShape> {
 
       throw new Error(`Invalid AST. ${JSON.stringify(node)}`);
     }
+  }
+
+  private executeFunction(
+    statements: Array<Statement>,
+    returnExpression: ReturnStatement
+  ) {
+    const executorContext = new Executor(statements, this.html);
+    executorContext.execute(statements);
+
+    const variables = executorContext.results;
+    return returnExpression.expressionsList.reduce(
+      (prev, curr) => ({
+        ...prev,
+        [curr]: variables[curr],
+      }),
+      {}
+    );
   }
 
   private executeDefiniteSelection(
