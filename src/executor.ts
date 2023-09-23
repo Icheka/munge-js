@@ -54,7 +54,6 @@ export default class Executor<TResult extends DefaultResultShape> {
 
   private execute(ast?: Array<AstNode>) {
     ast ??= this.ast;
-    console.log({ ast });
 
     for (const node of this.ast) {
       if (this.isAssignmentNode(node)) {

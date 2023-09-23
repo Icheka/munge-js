@@ -92,7 +92,7 @@ export default class Lexer {
         return t;
       }
 
-      const nextSpace = this.input.slice(this.currentIndex).indexOf("s");
+      const nextSpace = this.input.slice(this.currentIndex).indexOf(" ");
       if (nextSpace) {
         const id = this.input.slice(this.currentIndex, nextSpace + 1);
         if (reservedTokens[id]) {
@@ -127,8 +127,9 @@ export default class Lexer {
   /**
    * Returns the next token, without advancing to it.
    */
-  public peek() {
-    return this.input[this.currentIndex + 1];
+  public peek(index?: number) {
+    index ??= this.currentIndex + 1;
+    return this.input[index];
   }
 
   private readInteger() {
@@ -146,7 +147,9 @@ export default class Lexer {
 
   private readIdentifier() {
     const grabPreviousTokenGroup = () => {
-      return this.input.slice(0, this.currentIndex).split(" ").pop();
+      const sub = this.input.slice(0, this.currentIndex).split(" ").pop();
+      if (sub?.split('\n')?.length ?? 0 >= 3) return sub?.split('\n').pop();
+      return sub;
     };
 
     const id: Array<string> = [];
@@ -157,9 +160,6 @@ export default class Lexer {
             this.previousCharacterIsIdentifier()) ||
           (isSpace(this.currentCh) &&
             !isReservedToken(grabPreviousTokenGroup() ?? "") &&
-            // !isReservedToken(
-            //   this.input.slice(this.currentIndex - 6, this.currentIndex)
-            // ) &&
             this.previousCharacterIsIdentifier() &&
             !isReservedToken(this.input[this.currentIndex + 1])))) ||
       ((this.currentCh === ReservedTokens.LPAREN ||
