@@ -148,16 +148,17 @@ Assignment in Munge is as simple as writing an identifier for your variable, fol
 avatarUrls = section#team ul.members li > img {src} (0,)
 ```
 
-### Functions (coming soon)
+### Functions
 
-Functions promote modularity and code-reusability by allowing you to encapsulate code and assign its "return value" to variables. Functions are declared using the `def` keyword, followed by the "function identifier". Functions may return some value (elements captured by a selection statement) using the `return` keyword, but this is not a requirement.
+Functions promote modularity and code-reusability by allowing you to encapsulate code and assign their "return value" to variables. Functions are declared using the `def` keyword, followed by the function identifier. Functions must return a tuple (denoted by {...}).
 
 Functions are used (or "invoked") like so: `do function_name`. They must be declared before they can be invoked.
 
 **Correct**
 ```javascript
 def get_avatar_urls
-    return section#team ul.members li > img {src} (0,)
+    urls = section#team ul.members li > img {src} (0,)
+    return { urls }
 
 avatarUrls = do get_avatar_urls
 ```
@@ -167,7 +168,25 @@ avatarUrls = do get_avatar_urls
 avatarUrls = do get_avatar_urls
 
 def get_avatar_urls
-    return section#team ul.members li > img {src} (0,)
+    urls = section#team ul.members li > img {src} (0,)
+    return { urls }
+```
+
+**Incorrect (will throw an error because get_avatar_urls lacks a return value)**
+```javascript
+avatarUrls = do get_avatar_urls
+
+def get_avatar_urls
+    urls = section#team ul.members li > img {src} (0,)
+```
+
+**Incorrect (will throw an error because get_avatar_urls does not return a tuple)**
+```javascript
+avatarUrls = do get_avatar_urls
+
+def get_avatar_urls
+    urls = section#team ul.members li > img {src} (0,)
+    return urls
 ```
 
 ### Modules (coming soon)
