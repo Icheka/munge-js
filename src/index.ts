@@ -6,6 +6,7 @@ export default class Munger<TResult extends DefaultResultShape> {
   private ast: Ast;
 
   constructor(dslCode: string) {
+    console.log({ lex: new Lexer(dslCode) });
     this.ast = new Parser(new Lexer(dslCode)).parse();
     console.log({ ast: this.ast });
   }
@@ -17,16 +18,14 @@ export default class Munger<TResult extends DefaultResultShape> {
 
 export { Element } from "./executor";
 
-// new Munger(`
-//   x = #viewport > canvas
-// `).munge("<div id=viewport><canvas></canvas></div>");
-
 const result = new Munger(`
+
 def function
-  x = #viewport > canvas
+  x = #viewport
+  y = #viewport > canvas
   return {x}
 
-y = do function
+div = do function
 `).munge("<div id=viewport><canvas></canvas></div>");
 
 console.log({ result });

@@ -188,13 +188,20 @@ describe("parse", () => {
       });
     });
 
-    const functionInvocation = "x = do y";
-    const parser = new Parser(new Lexer(functionInvocation));
-    const [
-      { identifier: functionInvocationVariable, functionName: invokedFunction },
-    ] = parser.parse() as Array<FunctionInvocationStatement>;
-    expect(functionInvocationVariable).toBe("x");
-    expect(invokedFunction).toBe("y");
+    const functionInvocations = [
+      { input: "x = do y", identifiers: ["x"], functionName: "y" },
+      { input: "x, y = do u", identifiers: ["x", "y"], functionName: "u" },
+    ];
+    functionInvocations.forEach(({ functionName, identifiers, input }) => {
+      const parser = new Parser(new Lexer(input));
+      const [{ functionName: resFunctionName, identifiers: resIdentifiers }] =
+        parser.parse() as Array<FunctionInvocationStatement>;
+
+      expect(resFunctionName).toBe(functionName);
+      resIdentifiers.forEach((id, i) => {
+        expect(id).toEqual(identifiers[i]);
+      });
+    });
   });
 });
 

@@ -40,7 +40,7 @@ export default class Executor<TResult extends DefaultResultShape> {
   private isFunctionInvocationNode(
     node: any
   ): node is FunctionInvocationStatement {
-    return node.identifier && node.functionName;
+    return node.identifiers && node.functionName;
   }
 
   private execute(ast?: Array<AstNode>) {
@@ -113,11 +113,24 @@ export default class Executor<TResult extends DefaultResultShape> {
       }
 
       if (this.isFunctionInvocationNode(node)) {
-        const { functionName, identifier } = node;
-        (this.results as any)[identifier] = Object.values(this.functions[functionName])[0];
+        const { functionName, identifiers } = node;
+
+        if (!this.functions[functionName])
+          throw new Error(`Function ${functionName} is undefined`);
+
+        const functionReturnIdentifiers = Object.values(
+          this.functions[functionName]
+        );
+
+        if (functionReturnIdentifiers.length < identifiers.length) throw new Error(`Function ${functionName} does not return enough variables to unpack. Function returns ${functionReturnIdentifiers.length}, you expected ${identifiers.length}`);
+
+        identifiers.forEach((identifier, i) => {
+          (this.results as any)[identifier] = functionReturnIdentifiers[i];
+        });
+
         continue;
       }
-      
+
       throw new Error(`Invalid AST. ${JSON.stringify(node)}`);
     }
   }

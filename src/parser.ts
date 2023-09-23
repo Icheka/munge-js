@@ -1,8 +1,4 @@
-import Lexer, {
-  ReservedTokens,
-  Token,
-  TokenTypes,
-} from "./lexer";
+import Lexer, { ReservedTokens, Token, TokenTypes } from "./lexer";
 
 interface Statement {}
 
@@ -66,7 +62,7 @@ export class AssignmentStatement implements Statement {
 }
 
 export class FunctionInvocationStatement implements Statement {
-  constructor(public identifier: string, public functionName: string) {}
+  constructor(public identifiers: Array<string>, public functionName: string) {}
 }
 
 class UnexpectedTokenError extends Error {
@@ -113,17 +109,60 @@ export default class Parser {
     if (identifier === ReservedTokens.RETURN)
       return this.parseReturnStatement();
 
-    this.advanceAndAssertThatNextTokenIs("EQUALS");
-    this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
+    this.advanceToNextToken();
 
-    switch (this.currentToken.value) {
-      case ReservedTokens.DO:
-        return this.parseFunctionInvocation(identifier);
+    if (this.currentToken.value === ReservedTokens.DELIMITER) {
+      const identifiers = this.parseMultiAssignmentIdentifiers(identifier);
 
-      default:
-        const selection = this.parseSelectionExpression();
-        return new AssignmentStatement(identifier, selection);
+      // advance to EQUALS
+      this.advanceToNextToken();
+
+      // advance to DO
+      this.advanceToNextToken();
+      if (this.currentToken.value !== ReservedTokens.DO.valueOf())
+        throw new UnexpectedTokenError(
+          ReservedTokens.DO,
+          this.currentToken.value
+        );
+
+      return this.parseFunctionInvocation(identifiers);
+    } else if (this.currentToken.value === ReservedTokens.EQUALS) {
+      this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
+
+      switch (this.currentToken.value as ReservedTokens) {
+        case ReservedTokens.DO:
+          return this.parseFunctionInvocation([identifier]);
+
+        default:
+          const selection = this.parseSelectionExpression();
+          return new AssignmentStatement(identifier, selection);
+      }
     }
+
+    throw new UnexpectedTokenError(
+      ReservedTokens.EQUALS,
+      this.currentToken.value
+    );
+  }
+
+  public parseMultiAssignmentIdentifiers(
+    firstIdentifier: string
+  ): Array<string> {
+    const identifiers = [firstIdentifier];
+
+    // at first run, we are at a DELIMITER token
+    while (
+      this.currentToken.value === ReservedTokens.DELIMITER ||
+      this.currentToken.type === TokenTypes.IDENTIFIER
+    ) {
+      this.advanceAndAssertThatNextTokenIs(TokenTypes.IDENTIFIER);
+      identifiers.push(this.currentToken.value);
+
+      if (this.lexer.peek() !== ReservedTokens.DELIMITER) break;
+      this.advanceToNextToken();
+    }
+
+    return identifiers;
   }
 
   public parseReturnStatement(): ReturnStatement {
@@ -132,9 +171,14 @@ export default class Parser {
     return new ReturnStatement(expressions);
   }
 
-  public parseFunctionInvocation(identifier: string): FunctionInvocationStatement {
+  public parseFunctionInvocation(
+    identifiers: Array<string>
+  ): FunctionInvocationStatement {
     this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
-    return new FunctionInvocationStatement(identifier, this.currentToken.value);
+    return new FunctionInvocationStatement(
+      identifiers,
+      this.currentToken.value
+    );
   }
 
   public parseFunction(): FunctionStatement {
@@ -146,7 +190,7 @@ export default class Parser {
     this.advanceToNextToken();
 
     while (this.currentToken.value !== ReservedTokens.RETURN) {
-      if (this.currentToken.type === TokenTypes.EOF)
+      if (this.currentToken.value && this.currentToken.type === TokenTypes.EOF)
         throw new UnexpectedTokenError(
           ReservedTokens.RETURN,
           this.currentToken.type

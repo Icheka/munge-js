@@ -124,6 +124,13 @@ export default class Lexer {
     this.currentCh = this.input[this.currentIndex];
   }
 
+  /**
+   * Returns the next token, without advancing to it.
+   */
+  public peek() {
+    return this.input[this.currentIndex + 1];
+  }
+
   private readInteger() {
     const integers: Array<string> = [];
     while (isDigit(this.currentCh)) {
