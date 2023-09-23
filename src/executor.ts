@@ -1,4 +1,10 @@
-import { Ast, AssignmentStatement, AttributesArray } from "./parser";
+import {
+  Ast,
+  AssignmentStatement,
+  AttributesArray,
+  AstNode,
+  FunctionStatement,
+} from "./parser";
 import { parse as parseHTML, HTMLElement } from "node-html-parser";
 
 export type Element = HTMLElement;
@@ -11,51 +17,86 @@ export default class Executor<TResult extends DefaultResultShape> {
   public ast: Ast;
   private $: Element;
   public results: TResult;
+  public functions: Record<string, any>;
 
-  constructor(ast: Ast, html: string) {
+  constructor(ast: Ast, private html: string) {
     this.ast = ast;
     this.$ = parseHTML(html);
     this.results = {} as TResult;
+    this.functions = {};
 
     this.execute();
   }
 
-  private execute() {
-    for (const node of this.ast as Array<AssignmentStatement>) {
-      const {
-        identifier,
-        selection: { range, selector, attributes },
-      } = node;
-      if (!range.start && !range.end) {
-        (this.results as any)[identifier] = this.executeNonRangedSelection(
-          selector,
-          attributes
-        );
-        continue;
+  private isAssignmentNode(node: any): node is AssignmentStatement {
+    return node.identifier && node.selection;
+  }
+
+  private isFunctionNode(node: any): node is FunctionStatement {
+    return node.identifier && node.statements && node.returnExpression;
+  }
+
+  private execute(ast?: Array<AstNode>) {
+    ast ??= this.ast;
+
+    for (const node of this.ast) {
+      if (this.isAssignmentNode(node)) {
+        const {
+          identifier,
+          selection: { range, selector, attributes },
+        } = node;
+        if (!range.start && !range.end) {
+          (this.results as any)[identifier] = this.executeNonRangedSelection(
+            selector,
+            attributes
+          );
+          continue;
+        }
+        if (range.start && range.start === range.end) {
+          (this.results as any)[identifier] = this.executeIndexSelection(
+            selector,
+            parseInt(range.start),
+            attributes
+          );
+          continue;
+        }
+        if (range.start && range.end === undefined) {
+          (this.results as any)[identifier] = this.executeIndefiniteSelection(
+            selector,
+            parseInt(range.start),
+            attributes
+          );
+          continue;
+        }
+        if (range.start && range.end) {
+          (this.results as any)[identifier] = this.executeDefiniteSelection(
+            selector,
+            parseInt(range.start),
+            parseInt(range.end),
+            attributes
+          );
+          continue;
+        }
+
+        throw new Error(`Invalid AST. ${JSON.stringify(node)}`);
       }
-      if (range.start && range.start === range.end) {
-        (this.results as any)[identifier] = this.executeIndexSelection(
-          selector,
-          parseInt(range.start),
-          attributes
+
+      if (this.isFunctionNode(node)) {
+        const executorContext = new Executor(node.statements, this.html);
+        executorContext.execute(node.statements);
+
+        const variables = executorContext.results;
+        const results = node.returnExpression.expressionsList.reduce(
+          (prev, curr) => ({
+            ...prev,
+            [curr]: variables[curr],
+          }),
+          {}
         );
-        continue;
-      }
-      if (range.start && range.end === undefined) {
-        (this.results as any)[identifier] = this.executeIndefiniteSelection(
-          selector,
-          parseInt(range.start),
-          attributes
-        );
-        continue;
-      }
-      if (range.start && range.end) {
-        (this.results as any)[identifier] = this.executeDefiniteSelection(
-          selector,
-          parseInt(range.start),
-          parseInt(range.end),
-          attributes
-        );
+
+        // hoist function scope
+        (this.results as any)[node.identifier] = results;
+
         continue;
       }
 

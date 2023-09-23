@@ -1,12 +1,32 @@
-import Lexer, { ReservedTokens, Token, TokenTypes } from "./lexer";
+import Lexer, {
+  ReservedTokens,
+  Token,
+  TokenTypes,
+} from "./lexer";
 
 interface Statement {}
 
-type AstNode = Statement; // will extend to include 'statements' like macros
+export type AstNode = Statement; // will extend to include 'statements' like macros
 
 export type Ast = Array<AstNode>;
 
 export type AttributesArray = Array<string>;
+
+export class FunctionStatement implements Statement {
+  constructor(
+    public identifier: string,
+    public statements: Array<Statement>,
+    public returnExpression: ReturnStatement
+  ) {}
+}
+
+class ReturnStatement implements Statement {
+  /**
+   *
+   * @param expressionsList array of identifiers
+   */
+  constructor(public expressionsList: AttributesArray) {}
+}
 
 class RangeStatement implements Statement {
   start?: string;
@@ -43,6 +63,10 @@ export class AssignmentStatement implements Statement {
     this.identifier = identifier;
     this.selection = selection;
   }
+}
+
+export class FunctionInvocationStatement implements Statement {
+  constructor(public identifier: string, public functionName: string) {}
 }
 
 class UnexpectedTokenError extends Error {
@@ -85,11 +109,57 @@ export default class Parser {
 
     const identifier = this.currentToken.value;
 
+    if (identifier === ReservedTokens.DEF) return this.parseFunction();
+    if (identifier === ReservedTokens.RETURN)
+      return this.parseReturnStatement();
+
     this.advanceAndAssertThatNextTokenIs("EQUALS");
     this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
-    const selection = this.parseSelectionExpression();
 
-    return new AssignmentStatement(identifier, selection);
+    switch (this.currentToken.value) {
+      case ReservedTokens.DO:
+        return this.parseFunctionInvocation(identifier);
+
+      default:
+        const selection = this.parseSelectionExpression();
+        return new AssignmentStatement(identifier, selection);
+    }
+  }
+
+  public parseReturnStatement(): ReturnStatement {
+    this.advanceAndAssertThatNextTokenIs("LBRACE");
+    const expressions = this.parseAttributesArray();
+    return new ReturnStatement(expressions);
+  }
+
+  public parseFunctionInvocation(identifier: string): FunctionInvocationStatement {
+    this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
+    return new FunctionInvocationStatement(identifier, this.currentToken.value);
+  }
+
+  public parseFunction(): FunctionStatement {
+    this.advanceAndAssertThatNextTokenIs("IDENTIFIER");
+
+    const identifier = this.currentToken.value;
+    const statements: Array<Statement> = [];
+
+    this.advanceToNextToken();
+
+    while (this.currentToken.value !== ReservedTokens.RETURN) {
+      if (this.currentToken.type === TokenTypes.EOF)
+        throw new UnexpectedTokenError(
+          ReservedTokens.RETURN,
+          this.currentToken.type
+        );
+
+      statements.push(this.parseStatement());
+
+      this.advanceToNextToken();
+    }
+
+    const returnExpr = this.parseReturnStatement();
+
+    return new FunctionStatement(identifier, statements, returnExpr);
   }
 
   private parseSelectionExpression(): SelectionExpression {

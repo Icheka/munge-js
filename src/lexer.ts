@@ -6,6 +6,9 @@ export enum ReservedTokens {
   NEWLINE = "\n",
   LBRACE = "{",
   RBRACE = "}",
+  DEF = "def",
+  RETURN = "return",
+  DO = "do",
 }
 
 export enum TokenTypes {
@@ -83,14 +86,26 @@ export default class Lexer {
         return new Token(TokenTypes.INTEGER, this.readInteger());
       }
 
-      if (isIdentifier(this.currentCh)) {
-        return new Token(TokenTypes.IDENTIFIER, this.readIdentifier());
-      }
-
       if (isReservedToken(this.currentCh)) {
         const t = new Token(reservedTokens[this.currentCh], this.currentCh);
         this.advanceToNextToken();
         return t;
+      }
+
+      const nextSpace = this.input.slice(this.currentIndex).indexOf("s");
+      if (nextSpace) {
+        const id = this.input.slice(this.currentIndex, nextSpace + 1);
+        if (reservedTokens[id]) {
+          this.currentCh = id;
+          this.currentIndex += id.length - 1;
+          const t = new Token(reservedTokens[this.currentCh], this.currentCh);
+          this.advanceToNextToken();
+          return t;
+        }
+      }
+
+      if (isIdentifier(this.currentCh)) {
+        return new Token(TokenTypes.IDENTIFIER, this.readIdentifier());
       }
 
       throw new Error(`Encountered an unexpected token: ${this.currentCh}`);
@@ -123,6 +138,10 @@ export default class Lexer {
   }
 
   private readIdentifier() {
+    const grabPreviousTokenGroup = () => {
+      return this.input.slice(0, this.currentIndex).split(" ").pop();
+    };
+
     const id: Array<string> = [];
     while (
       (this.currentCh !== undefined &&
@@ -130,6 +149,10 @@ export default class Lexer {
           (this.currentCh === ReservedTokens.EQUALS &&
             this.previousCharacterIsIdentifier()) ||
           (isSpace(this.currentCh) &&
+            !isReservedToken(grabPreviousTokenGroup() ?? "") &&
+            // !isReservedToken(
+            //   this.input.slice(this.currentIndex - 6, this.currentIndex)
+            // ) &&
             this.previousCharacterIsIdentifier() &&
             !isReservedToken(this.input[this.currentIndex + 1])))) ||
       ((this.currentCh === ReservedTokens.LPAREN ||

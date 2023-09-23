@@ -1,7 +1,10 @@
+import { readdirSync } from 'fs';
 import { defineConfig } from 'tsup';
 
+const src = readdirSync('./src');
+
 export default defineConfig(() => ({
-  entry: ['src/index.ts'],
+  entry: src.map((file) => `src/${file}`),
   splitting: false,
   sourcemap: true,
   clean: true,

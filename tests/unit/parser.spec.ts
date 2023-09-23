@@ -1,5 +1,6 @@
 import Lexer, { ReservedTokens } from "../../src/lexer";
 import Parser, { AssignmentStatement } from "../../src/parser";
+import { FunctionInvocationStatement } from "../../src/parser";
 
 describe("parseRangeStatement", () => {
   it("correctly parses an index statement", () => {
@@ -131,7 +132,7 @@ describe("parseStatement", () => {
   ];
 
   tests.forEach(({ input, ...args }) => {
-    testParseStatement(input, {
+    testAssignmentStatement(input, {
       ...args,
     });
   });
@@ -145,22 +146,85 @@ describe("parse", () => {
     `;
     const chunks = input.split("\n").slice(1, -1);
 
-    testParseStatement(chunks[0], {
+    testAssignmentStatement(chunks[0], {
       identifier: "intro",
       selector: "div#intro",
       start: "0",
       end: "0",
     });
-    testParseStatement(chunks[1], {
+    testAssignmentStatement(chunks[1], {
       identifier: "twitterLink",
       selector: "a.social-links",
       start: "1",
       end: undefined,
     });
+
+    const functionTests = [
+      {
+        input: `
+      def get_avatars
+        avatars = section#team > div > img {src}
+        return { avatars }
+      `,
+        identifier: "get_avatars",
+        statements: [
+          {
+            identifier: "avatars",
+            selection: {
+              selector: "section#team > div > img",
+              attributes: ["src"],
+              range: {},
+            },
+          },
+        ],
+        returnExpr: ["avatars"],
+      },
+    ];
+    functionTests.forEach(({ identifier, input, statements, returnExpr }) => {
+      testFunctionStatement(input, {
+        identifier,
+        statements,
+        returnExpr,
+      });
+    });
+
+    const functionInvocation = "x = do y";
+    const parser = new Parser(new Lexer(functionInvocation));
+    const [
+      { identifier: functionInvocationVariable, functionName: invokedFunction },
+    ] = parser.parse() as Array<FunctionInvocationStatement>;
+    expect(functionInvocationVariable).toBe("x");
+    expect(invokedFunction).toBe("y");
   });
 });
 
-function testParseStatement(
+function testFunctionStatement(
+  input: string,
+  {
+    identifier,
+    statements,
+    returnExpr,
+  }: {
+    identifier: string;
+    statements: Array<AssignmentStatement>;
+    returnExpr: Array<string>;
+  }
+) {
+  const parser = new Parser(new Lexer(input));
+  const {
+    identifier: resId,
+    statements: resStatements,
+    returnExpression: resReturn,
+  } = parser.parseFunction();
+
+  console.log([resStatements]);
+  expect(resId).toBe(identifier);
+  expect(resStatements.length).toBe(statements.length);
+  // TODO: test individual statements match
+  expect(resReturn.expressionsList.length).toBe(returnExpr.length);
+}
+
+function testAssignmentStatement(
   input: string,
   {
     end,
